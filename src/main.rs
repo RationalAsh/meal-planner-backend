@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
-use mpb::{Ingredient, Ingredients, Nutrition, ServerInfo, CORS};
+use mpb::{
+    Catalog, Dish, Ingredient, Ingredients, Nutrition, Pantry, PantryIngredient, ServerInfo, CORS,
+};
 use polodb_core::{bson::doc, ClientCursor, CollectionT, Database};
 use rocket::{http::Status, routes, serde::json::Json, State};
 use serde_json::json;
@@ -36,17 +38,39 @@ fn rocket() -> _ {
 }
 
 #[rocket::get("/api/v1/dishes")]
-fn get_dishes() -> String {
-    json!(["Dish 1", "Dish 2", "Dish 3"]).to_string()
+fn get_dishes(db: &State<Arc<Mutex<Database>>>) -> Catalog {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Dishes" collection.
+    let dishes_collection = db.collection("dishes");
+
+    // Find all dishes in the collection.
+    let dishes: ClientCursor<Dish> = dishes_collection.find(doc! {}).run().unwrap();
+
+    // Convert the dishes to a vector.
+    let dishes: Vec<Dish> = dishes.into_iter().map(|r| r.unwrap()).collect();
+
+    Catalog(dishes)
 }
 
 #[rocket::get("/api/v1/pantry")]
-fn get_pantry(db: &State<Arc<Mutex<Database>>>) -> String {
+fn get_pantry(db: &State<Arc<Mutex<Database>>>) -> Pantry {
+    // Acquire lock on the database.
     let db = db.lock().unwrap();
+
+    // Get the "Pantry" collection.
     let pantry_collection = db.collection("pantry");
-    let pantry = pantry_collection.find(doc! {}).run().unwrap();
-    let pantry: Vec<Ingredient> = pantry.into_iter().map(|r| r.unwrap()).collect();
-    json!(pantry).to_string()
+
+    // Find all pantry ingredients in the collection.
+    let pantry_ingredients: ClientCursor<PantryIngredient> =
+        pantry_collection.find(doc! {}).run().unwrap();
+
+    // Convert the pantry ingredients to a vector.
+    let pantry_ingredients: Vec<PantryIngredient> =
+        pantry_ingredients.into_iter().map(|r| r.unwrap()).collect();
+
+    Pantry(pantry_ingredients)
 }
 
 #[rocket::get("/api/v1/ingredients")]
