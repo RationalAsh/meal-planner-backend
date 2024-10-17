@@ -2,3 +2,6 @@
 
 // Ignore all files with .db extension
 *.db
+
+// Ignore the mpb.db/ folder
+mpb.db/

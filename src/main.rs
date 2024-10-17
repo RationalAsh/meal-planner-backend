@@ -47,28 +47,6 @@ fn get_ingredients(db: &State<Arc<Mutex<Database>>>) -> Ingredients {
     let ingredients: Vec<Ingredient> = ingredients.into_iter().map(|r| r.unwrap()).collect();
 
     Ingredients(ingredients)
-
-    // let ingredients = vec![
-    //     Ingredient {
-    //         name: "Apple".to_string(),
-    //         serving_size: 100.0,
-    //         nutrition: Nutrition {
-    //             calories: 52.0,
-    //             protein: 0.3,
-    //             fat: 0.2,
-    //         },
-    //     },
-    //     Ingredient {
-    //         name: "Banana".to_string(),
-    //         serving_size: 100.0,
-    //         nutrition: Nutrition {
-    //             calories: 89.0,
-    //             protein: 1.1,
-    //             fat: 0.3,
-    //         },
-    //     },
-    // ];
-    // Ingredients(ingredients)
 }
 
 /// Initialize database with some initial data.
