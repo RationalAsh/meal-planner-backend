@@ -1,45 +1,102 @@
-use mpb::{Ingredient, Ingredients, Nutrition};
-use polodb_core::Database;
-use rocket::routes;
+use chrono::{DateTime, Utc};
+use mpb::{Ingredient, Ingredients, Nutrition, ServerInfo, CORS};
+use polodb_core::{bson::doc, ClientCursor, CollectionT, Database};
+use rocket::{routes, State};
 use serde_json::json;
+use std::sync::{Arc, Mutex};
 
 #[rocket::get("/api/v1/test")]
-fn index() -> &'static str {
-    "Hello, world!"
+fn index() -> ServerInfo {
+    ServerInfo {
+        ts: Utc::now().to_rfc3339(),
+        version: "0.1.0".to_string(),
+    }
 }
 
 #[rocket::launch]
 fn rocket() -> _ {
     let db_path = "mpb.db";
-    // Open a connection to the database.
     let db = Database::open_file(db_path).unwrap();
+
+    initialize_db(&db);
+
+    // Open a connection to the database.
+    let db = Arc::new(Mutex::new(db));
+
+    // Initialize the database with some initial data.
 
     rocket::build()
         .mount("/", routes![index])
         .mount("/", routes![get_ingredients])
+        .manage(db)
+        .attach(CORS)
 }
 
 #[rocket::get("/api/v1/ingredients")]
-fn get_ingredients() -> Ingredients {
+fn get_ingredients(db: &State<Arc<Mutex<Database>>>) -> Ingredients {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Ingredients" collection.
+    let ingredients_collection = db.collection("ingredients");
+
+    // Find all ingredients in the collection.
+    let ingredients: ClientCursor<Ingredient> = ingredients_collection.find(doc! {}).run().unwrap();
+
+    // Convert the ingredients to a vector.
+    let ingredients: Vec<Ingredient> = ingredients.into_iter().map(|r| r.unwrap()).collect();
+
+    Ingredients(ingredients)
+
+    // let ingredients = vec![
+    //     Ingredient {
+    //         name: "Apple".to_string(),
+    //         serving_size: 100.0,
+    //         nutrition: Nutrition {
+    //             calories: 52.0,
+    //             protein: 0.3,
+    //             fat: 0.2,
+    //         },
+    //     },
+    //     Ingredient {
+    //         name: "Banana".to_string(),
+    //         serving_size: 100.0,
+    //         nutrition: Nutrition {
+    //             calories: 89.0,
+    //             protein: 1.1,
+    //             fat: 0.3,
+    //         },
+    //     },
+    // ];
+    // Ingredients(ingredients)
+}
+
+/// Initialize database with some initial data.
+fn initialize_db(db: &Database) {
     let ingredients = vec![
         Ingredient {
-            name: "Apple".to_string(),
+            name: "Egg".to_string(),
             serving_size: 100.0,
             nutrition: Nutrition {
-                calories: 52.0,
-                protein: 0.3,
-                fat: 0.2,
+                calories: 140.0,
+                protein: 12.0,
+                fat: 10.0,
             },
         },
         Ingredient {
-            name: "Banana".to_string(),
-            serving_size: 100.0,
+            name: "Rice (Cooked)".to_string(),
+            serving_size: 200.0,
             nutrition: Nutrition {
-                calories: 89.0,
-                protein: 1.1,
-                fat: 0.3,
+                calories: 230.0,
+                protein: 5.0,
+                fat: 1.0,
             },
         },
     ];
-    Ingredients(ingredients)
+
+    // Get the "Ingredients" collection.
+    let ingredients_collection = db.collection("ingredients");
+
+    // Insert the ingredients into the collection.
+    ingredients_collection.insert_many(ingredients);
 }
