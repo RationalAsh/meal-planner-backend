@@ -1,0 +1,14 @@
+// Folder-specific settings
+//
+// For a full list of overridable settings, and general information on folder-specific settings,
+// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
+{
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        "path": "/Users/ashwin/Library/Application Support/Zed/languages/rust-analyzer/rust-analyzer-2024-10-07",
+        "arguments": ["--no-log-buffering"]
+      }
+    }
+  }
+}

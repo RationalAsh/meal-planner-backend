@@ -1,0 +1,13 @@
+[debug]
+workers = 4
+address = "0.0.0.0"
+port = 8000
+keep_alive = 5
+limits = { forms = 32768 }
+
+[release]
+workers = 4
+address = "0.0.0.0"
+port = 8000
+keep_alive = 5
+limits = { forms = 32768 }
