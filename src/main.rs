@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use mpb::{Ingredient, Ingredients, Nutrition, ServerInfo, CORS};
 use polodb_core::{bson::doc, ClientCursor, CollectionT, Database};
-use rocket::{routes, State};
+use rocket::{http::Status, routes, serde::json::Json, State};
 use serde_json::json;
 use std::sync::{Arc, Mutex};
 
@@ -28,8 +28,18 @@ fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index])
         .mount("/", routes![get_ingredients])
+        .mount("/", routes![add_ingredient])
         .manage(db)
         .attach(CORS)
+}
+
+#[rocket::get("/api/v1/pantry")]
+fn get_pantry(db: &State<Arc<Mutex<Database>>>) -> String {
+    let db = db.lock().unwrap();
+    let pantry_collection = db.collection("pantry");
+    let pantry = pantry_collection.find(doc! {}).run().unwrap();
+    let pantry: Vec<Ingredient> = pantry.into_iter().map(|r| r.unwrap()).collect();
+    json!(pantry).to_string()
 }
 
 #[rocket::get("/api/v1/ingredients")]
@@ -47,6 +57,25 @@ fn get_ingredients(db: &State<Arc<Mutex<Database>>>) -> Ingredients {
     let ingredients: Vec<Ingredient> = ingredients.into_iter().map(|r| r.unwrap()).collect();
 
     Ingredients(ingredients)
+}
+
+#[rocket::post("/api/v1/ingredients", data = "<ingredient>")]
+fn add_ingredient(
+    db: &State<Arc<Mutex<Database>>>,
+    ingredient: Json<Ingredient>,
+) -> Result<Ingredient, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Ingredients" collection.
+    let ingredients_collection = db.collection("ingredients");
+
+    // Insert the ingredient into the collection.
+    let ingredient = ingredient.into_inner();
+    match ingredients_collection.insert_one(ingredient.clone()) {
+        Ok(_) => Ok(ingredient),
+        Err(_) => Err(Status::InternalServerError),
+    }
 }
 
 /// Initialize database with some initial data.

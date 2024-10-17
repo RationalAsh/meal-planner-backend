@@ -47,7 +47,7 @@ impl<'r> Responder<'r, 'static> for ServerInfo {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ingredients(pub Vec<Ingredient>);
 
 impl Ingredients {
@@ -68,7 +68,7 @@ impl<'r> Responder<'r, 'static> for Ingredients {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ingredient {
     /// Name of the ingredient.
     pub name: String,
@@ -90,7 +90,7 @@ impl<'r> Responder<'r, 'static> for Ingredient {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Nutrition {
     /// Calories in kcal.
     pub calories: f32,
