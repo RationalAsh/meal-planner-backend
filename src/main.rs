@@ -2,9 +2,9 @@ use chrono::{DateTime, Utc};
 use mpb::{
     Catalog, Dish, Ingredient, Ingredients, Nutrition, Pantry, PantryIngredient, ServerInfo, CORS,
 };
-use polodb_core::{bson::doc, ClientCursor, CollectionT, Database};
+use polodb_core::{bson::doc, ClientCursor, Collection, CollectionT, Database};
 use rocket::{http::Status, routes, serde::json::Json, State};
-use serde_json::json;
+use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 
 #[rocket::get("/api/v1/test")]
@@ -32,6 +32,8 @@ fn rocket() -> _ {
         .mount("/", routes![get_ingredients])
         .mount("/", routes![add_ingredient])
         .mount("/", routes![get_pantry])
+        .mount("/", routes![add_pantry_ingredient])
+        .mount("/", routes![clear_pantry])
         .mount("/", routes![get_dishes])
         .mount("/", routes![add_dish])
         .manage(db)
@@ -116,6 +118,25 @@ fn add_pantry_ingredient(
         Ok(_) => Ok(pantry_ingredient),
         Err(_) => Err(Status::InternalServerError),
     }
+}
+
+#[rocket::post("/api/v1/pantry/clearall")]
+fn clear_pantry(db: &State<Arc<Mutex<Database>>>) -> Result<Json<Value>, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Pantry" collection.
+    let pantry_collection: Collection<PantryIngredient> = db.collection("pantry");
+
+    // Clear the pantry collection.
+    let res = match pantry_collection.delete_many(doc! {}) {
+        Ok(_) => Ok(Json(json!({
+            "message": "Pantry cleared"
+        }))),
+        Err(_) => Err(Status::InternalServerError),
+    };
+
+    res
 }
 
 #[rocket::get("/api/v1/ingredients")]
