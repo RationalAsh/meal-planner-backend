@@ -97,6 +97,27 @@ fn get_pantry(db: &State<Arc<Mutex<Database>>>) -> Pantry {
     Pantry(pantry_ingredients)
 }
 
+#[rocket::post("/api/v1/pantry", data = "<pantry_ingredient>")]
+fn add_pantry_ingredient(
+    db: &State<Arc<Mutex<Database>>>,
+    pantry_ingredient: Json<PantryIngredient>,
+) -> Result<PantryIngredient, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Pantry" collection.
+    let pantry_collection = db.collection("pantry");
+
+    // Insert the pantry ingredient into the collection.
+    let pantry_ingredient = pantry_ingredient.into_inner();
+
+    // Return the inserted pantry ingredient.
+    match pantry_collection.insert_one(pantry_ingredient.clone()) {
+        Ok(_) => Ok(pantry_ingredient),
+        Err(_) => Err(Status::InternalServerError),
+    }
+}
+
 #[rocket::get("/api/v1/ingredients")]
 fn get_ingredients(db: &State<Arc<Mutex<Database>>>) -> Ingredients {
     // Acquire lock on the database.
