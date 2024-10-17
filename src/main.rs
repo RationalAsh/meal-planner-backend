@@ -33,6 +33,7 @@ fn rocket() -> _ {
         .mount("/", routes![add_ingredient])
         .mount("/", routes![get_pantry])
         .mount("/", routes![get_dishes])
+        .mount("/", routes![add_dish])
         .manage(db)
         .attach(CORS)
 }
@@ -52,6 +53,29 @@ fn get_dishes(db: &State<Arc<Mutex<Database>>>) -> Catalog {
     let dishes: Vec<Dish> = dishes.into_iter().map(|r| r.unwrap()).collect();
 
     Catalog(dishes)
+}
+
+#[rocket::post("/api/v1/dishes", data = "<dish>")]
+fn add_dish(db: &State<Arc<Mutex<Database>>>, dish: Json<Dish>) -> Result<Dish, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Dishes" collection.
+    let dishes_collection = db.collection("dishes");
+
+    // Insert the dish into the collection.
+    let result = dishes_collection.insert_one(dish.into_inner()).unwrap();
+
+    // Get the inserted dish.
+    let dish = dishes_collection
+        .find_one(doc! { "_id": result.inserted_id })
+        .unwrap_or(None);
+
+    // Return the inserted dish.
+    match dish {
+        Some(dish) => Ok(dish),
+        None => Err(Status::InternalServerError),
+    }
 }
 
 #[rocket::get("/api/v1/pantry")]
