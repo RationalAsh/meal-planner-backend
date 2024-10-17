@@ -29,8 +29,15 @@ fn rocket() -> _ {
         .mount("/", routes![index])
         .mount("/", routes![get_ingredients])
         .mount("/", routes![add_ingredient])
+        .mount("/", routes![get_pantry])
+        .mount("/", routes![get_dishes])
         .manage(db)
         .attach(CORS)
+}
+
+#[rocket::get("/api/v1/dishes")]
+fn get_dishes() -> String {
+    json!(["Dish 1", "Dish 2", "Dish 3"]).to_string()
 }
 
 #[rocket::get("/api/v1/pantry")]
@@ -105,5 +112,5 @@ fn initialize_db(db: &Database) {
     let ingredients_collection = db.collection("ingredients");
 
     // Insert the ingredients into the collection.
-    ingredients_collection.insert_many(ingredients);
+    let _ = ingredients_collection.insert_many(ingredients);
 }
