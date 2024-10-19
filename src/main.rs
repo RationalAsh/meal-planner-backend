@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use mpb::{
-    Catalog, Dish, Ingredient, Ingredients, Nutrition, Pantry, PantryIngredient, ServerInfo, CORS,
+    dishes::{Catalog, Dish},
+    ingredients::{Ingredient, Ingredients, Nutrition},
+    pantry::{Pantry, PantryIngredient},
+    ServerInfo, CORS,
 };
 use polodb_core::{bson::doc, ClientCursor, Collection, CollectionT, Database};
 use rocket::{http::Status, routes, serde::json::Json, State};
@@ -20,7 +23,7 @@ fn rocket() -> _ {
     let db_path = "mpb.db";
     let db = Database::open_file(db_path).unwrap();
 
-    initialize_db(&db);
+    // initialize_db(&db);
 
     // Open a connection to the database.
     let db = Arc::new(Mutex::new(db));
