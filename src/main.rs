@@ -64,7 +64,10 @@ fn signup(db: &State<Arc<Mutex<Database>>>, user: Json<User>) -> Result<User, St
 
     // Return the inserted user.
     match user {
-        Some(user) => Ok(user),
+        Some(mut user) => {
+            user.hashed_password = "redacted".to_string();
+            Ok(user)
+        }
         None => Err(Status::InternalServerError),
     }
 }
