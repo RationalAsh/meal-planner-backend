@@ -47,6 +47,7 @@ impl<'r> Responder<'r, 'static> for ServerInfo {
     }
 }
 
+pub mod auth;
 pub mod dishes;
 pub mod ingredients;
 pub mod pantry;

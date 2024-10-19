@@ -34,6 +34,7 @@ fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index])
         .mount("/", routes![login])
+        .mount("/", routes![signup])
         .mount("/", routes![get_ingredients])
         .mount("/", routes![add_ingredient])
         .mount("/", routes![get_pantry])
@@ -43,6 +44,29 @@ fn rocket() -> _ {
         .mount("/", routes![add_dish])
         .manage(db)
         .attach(CORS)
+}
+
+#[rocket::post("/api/v1/signup", data = "<user>")]
+fn signup(db: &State<Arc<Mutex<Database>>>, user: Json<User>) -> Result<User, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Users" collection.
+    let users_collection: Collection<User> = db.collection("users");
+
+    // Insert the user into the collection.
+    let result = users_collection.insert_one(user.into_inner()).unwrap();
+
+    // Get the inserted user.
+    let user = users_collection
+        .find_one(doc! { "_id": result.inserted_id })
+        .unwrap_or(None);
+
+    // Return the inserted user.
+    match user {
+        Some(user) => Ok(user),
+        None => Err(Status::InternalServerError),
+    }
 }
 
 #[rocket::post("/api/v1/login", data = "<user>")]
