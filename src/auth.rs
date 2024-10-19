@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 /// Structure to hold claims for JWT.
@@ -45,4 +45,25 @@ pub fn generate_jwt(email: String, hashed_password: String) -> String {
     };
     let key = EncodingKey::from_secret(secret.as_ref());
     encode(&header, &claims, &key).unwrap()
+}
+
+/// Function to decode a JWT token
+pub fn decode_jwt(token: String) -> Result<Claims, String> {
+    // Get the secret key from the environment
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+
+    // Trim off the "Bearer " prefix
+    let token = token.trim_start_matches("Bearer ");
+
+    // Decode the token
+    let decoded = match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::new(Algorithm::HS512),
+    ) {
+        Ok(token_data) => Ok(token_data.claims),
+        Err(_) => Err("Invalid token".to_string()),
+    };
+
+    decoded
 }
