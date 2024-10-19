@@ -43,6 +43,6 @@ pub fn generate_jwt(email: String, hashed_password: String) -> String {
         email,
         hashed_password,
     };
-    let key = EncodingKey::from_secret("secret".as_ref());
+    let key = EncodingKey::from_secret(secret.as_ref());
     encode(&header, &claims, &key).unwrap()
 }
