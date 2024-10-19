@@ -3,6 +3,7 @@ use mpb::{
     dishes::{Catalog, Dish},
     ingredients::{Ingredient, Ingredients, Nutrition},
     pantry::{Pantry, PantryIngredient},
+    users::User,
     ServerInfo, CORS,
 };
 use polodb_core::{bson::doc, ClientCursor, Collection, CollectionT, Database};
@@ -32,6 +33,7 @@ fn rocket() -> _ {
 
     rocket::build()
         .mount("/", routes![index])
+        .mount("/", routes![login])
         .mount("/", routes![get_ingredients])
         .mount("/", routes![add_ingredient])
         .mount("/", routes![get_pantry])
@@ -41,6 +43,26 @@ fn rocket() -> _ {
         .mount("/", routes![add_dish])
         .manage(db)
         .attach(CORS)
+}
+
+#[rocket::post("/api/v1/login", data = "<user>")]
+fn login(db: &State<Arc<Mutex<Database>>>, user: Json<User>) -> Result<User, Status> {
+    // Acquire lock on the database.
+    let db = db.lock().unwrap();
+
+    // Get the "Users" collection.
+    let users_collection: Collection<User> = db.collection("users");
+
+    // Find the user in the collection.
+    let user: Option<User> = users_collection
+        .find_one(doc! { "username": user.email.clone() })
+        .unwrap_or(None);
+
+    // If the user is not found, return a 404.
+    match user {
+        Some(user) => Ok(user),
+        None => Err(Status::NotFound),
+    }
 }
 
 #[rocket::get("/api/v1/dishes")]
