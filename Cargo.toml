@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jsonwebtoken = "=7.2"
+jsonwebtoken = "9.3.0"
 rocket = { version = "0.5.1", features = ["json"] }
 polodb_core = "5.1.2"
 serde_json = "1.0.128"

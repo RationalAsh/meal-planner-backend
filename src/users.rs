@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 /// Struct to represent user information.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
-    /// Username of the user.
-    pub uid: String,
+    /// Name of the user
+    pub first_name: String,
+    /// Last name of the user.
+    pub last_name: String,
     /// Email of the user.
     pub email: String,
     /// Password of the user.
-    pub password: String,
+    pub hashed_password: String,
 }
 
 impl<'r> Responder<'r, 'static> for User {
